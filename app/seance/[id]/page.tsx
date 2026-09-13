@@ -2,7 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { SiteHeader } from "@/components/site-header";
 import { FormateurPanel } from "./formateur-panel";
 import { ElevePanel } from "./eleve-panel";
-import { ContenuEditor } from "./contenu-editor";
+import { ContenuEditor, GuideEditor } from "./contenu-editor";
 import { Markdown } from "@/components/markdown";
 import { createExercice } from "@/app/exercice/[id]/actions";
 import Link from "next/link";
@@ -89,6 +89,35 @@ export default async function SeancePage({ params }: PageProps<"/seance/[id]">) 
         </div>
 
         <div className="rule mb-14" />
+
+        {/* Guide pédagogique (formateur uniquement) */}
+        {isFormateur && (
+          <section
+            className="mb-16 rounded-sm p-6 lg:p-8"
+            style={{
+              background: "rgba(184, 134, 47, 0.05)",
+              border: "1px solid rgba(184, 134, 47, 0.25)",
+            }}
+          >
+            <div className="flex items-baseline justify-between mb-5">
+              <div>
+                <div className="eyebrow" style={{ color: "var(--gold)" }}>
+                  Guide privé du formateur
+                </div>
+                <h2 className="font-display text-xl font-semibold text-[var(--deep)] mt-1">
+                  Plan pédagogique de la séance
+                </h2>
+              </div>
+              <span className="text-[11px] text-[var(--muted)] italic">
+                Christian ne voit pas cette section
+              </span>
+            </div>
+            <GuideEditor
+              seanceId={seance.id}
+              initial={seance.guide_md ?? ""}
+            />
+          </section>
+        )}
 
         {/* Contenu de séance (markdown) */}
         <section className="mb-16">

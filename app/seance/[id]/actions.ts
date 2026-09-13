@@ -74,6 +74,20 @@ export async function saveContenuMd(seanceId: number, contenu: string) {
   return { ok: true };
 }
 
+export async function saveGuideMd(seanceId: number, guide: string) {
+  const { supabase, role } = await requireUser();
+  if (role !== "formateur") return { error: "Réservé au formateur." };
+
+  const { error } = await supabase
+    .from("seances")
+    .update({ guide_md: guide, updated_at: new Date().toISOString() })
+    .eq("id", seanceId);
+  if (error) return { error: error.message };
+
+  revalidatePath(`/seance/${seanceId}`);
+  return { ok: true };
+}
+
 export async function saveEleveFeedback(
   seanceId: number,
   compris: number | null,
