@@ -3,6 +3,7 @@ import { SiteHeader } from "@/components/site-header";
 import { EnonceEditor } from "./enonce-editor";
 import { RenduForm } from "./rendu-form";
 import { RenduGrader } from "./rendu-grader";
+import { Markdown } from "@/components/markdown";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
@@ -100,11 +101,9 @@ export default async function ExercicePage({
                 {exo.titre}
               </h1>
               {exo.enonce ? (
-                <div className="mt-6 card p-6">
-                  <div className="eyebrow mb-3">Énoncé</div>
-                  <p className="text-[15px] text-[var(--ink)] whitespace-pre-wrap leading-relaxed">
-                    {exo.enonce}
-                  </p>
+                <div className="mt-6 card p-6 lg:p-8">
+                  <div className="eyebrow mb-4">Énoncé</div>
+                  <Markdown>{exo.enonce}</Markdown>
                 </div>
               ) : (
                 <p className="text-[13px] text-[var(--muted)] italic mt-6">

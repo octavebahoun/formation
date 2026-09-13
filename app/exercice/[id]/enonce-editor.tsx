@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { MarkdownEditor } from "@/components/markdown-editor";
 import { updateExercice, deleteExercice } from "./actions";
 
 type Props = {
@@ -17,62 +18,60 @@ export function EnonceEditor({
   initialEnonce,
 }: Props) {
   const [titre, setTitre] = useState(initialTitre);
-  const [enonce, setEnonce] = useState(initialEnonce);
-  const [saved, setSaved] = useState(false);
+  const [titreSaved, setTitreSaved] = useState(false);
   const [pending, startTransition] = useTransition();
   const [deleting, startDelete] = useTransition();
 
-  const save = () =>
+  const saveTitre = () =>
     startTransition(async () => {
-      const res = await updateExercice(exerciceId, { titre, enonce });
-      if (!res?.error) setSaved(true);
+      const res = await updateExercice(exerciceId, { titre });
+      if (!res?.error) setTitreSaved(true);
     });
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <div>
-        <label
-          htmlFor="titre"
-          className="eyebrow block mb-2"
-        >
-          Titre
-        </label>
+        <div className="flex items-baseline justify-between mb-2">
+          <label htmlFor="titre" className="eyebrow">
+            Titre
+          </label>
+          {titreSaved && (
+            <span className="text-[11px] text-[var(--teal)]">Enregistré ✓</span>
+          )}
+        </div>
         <input
           id="titre"
           value={titre}
           onChange={(e) => {
             setTitre(e.target.value);
-            setSaved(false);
+            setTitreSaved(false);
           }}
-          onBlur={save}
+          onBlur={saveTitre}
           className="w-full bg-transparent border-b border-[var(--line-strong)] focus:border-[var(--deep)] outline-none font-display text-3xl text-[var(--deep)] font-semibold py-2"
         />
       </div>
 
       <div>
-        <div className="flex items-baseline justify-between mb-2">
-          <label htmlFor="enonce" className="eyebrow">
-            Énoncé
-          </label>
-          {saved && (
-            <span className="text-[11px] text-[var(--teal)]">Enregistré ✓</span>
-          )}
-        </div>
-        <textarea
-          id="enonce"
-          value={enonce}
-          onChange={(e) => {
-            setEnonce(e.target.value);
-            setSaved(false);
-          }}
-          onBlur={save}
-          rows={8}
-          placeholder="Ce que tu attends de Christian, la contrainte, ce qui compte pour la note…"
-          className="w-full bg-[color:#FBFBF7] border border-[var(--line-strong)] rounded-sm p-4 text-[15px] leading-relaxed text-[var(--ink)] outline-none focus:border-[var(--deep)] resize-y"
+        <div className="eyebrow mb-3">Énoncé</div>
+        <MarkdownEditor
+          initial={initialEnonce}
+          save={async (value) => updateExercice(exerciceId, { enonce: value })}
+          placeholder={`# Objectif
+…
+
+## Ce que tu dois faire
+- …
+
+## Livraison
+GitHub ou Drive.
+
+## Critères de notation (/20)
+- Critère 1 : X pts
+- Critère 2 : X pts`}
         />
       </div>
 
-      <div className="flex justify-end pt-2">
+      <div className="flex justify-end pt-2 border-t border-[var(--line)]">
         <button
           type="button"
           disabled={deleting || pending}
@@ -83,7 +82,7 @@ export function EnonceEditor({
               });
             }
           }}
-          className="text-[12px] text-[var(--danger)] hover:underline"
+          className="text-[12px] text-[var(--danger)] hover:underline mt-4"
         >
           Supprimer l&apos;exercice
         </button>
