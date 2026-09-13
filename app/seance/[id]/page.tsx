@@ -2,6 +2,8 @@ import { createClient } from "@/lib/supabase/server";
 import { SiteHeader } from "@/components/site-header";
 import { FormateurPanel } from "./formateur-panel";
 import { ElevePanel } from "./eleve-panel";
+import { ContenuEditor } from "./contenu-editor";
+import { Markdown } from "@/components/markdown";
 import { createExercice } from "@/app/exercice/[id]/actions";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -87,6 +89,30 @@ export default async function SeancePage({ params }: PageProps<"/seance/[id]">) 
         </div>
 
         <div className="rule mb-14" />
+
+        {/* Contenu de séance (markdown) */}
+        <section className="mb-16">
+          <div className="flex items-baseline justify-between mb-6">
+            <h2 className="font-display text-xl font-semibold text-[var(--deep)]">
+              Contenu de la séance
+            </h2>
+            {!isFormateur && (
+              <span className="text-[11px] text-[var(--muted)]">
+                Rédigé par Octave
+              </span>
+            )}
+          </div>
+          {isFormateur ? (
+            <ContenuEditor
+              seanceId={seance.id}
+              initial={seance.contenu_md ?? ""}
+            />
+          ) : (
+            <div className="card p-6 lg:p-8">
+              <Markdown>{seance.contenu_md}</Markdown>
+            </div>
+          )}
+        </section>
 
         {/* Panneau selon rôle */}
         <section className="mb-16">
