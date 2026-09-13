@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
-import { signOut } from "./login/actions";
+import { SiteHeader } from "@/components/site-header";
 import Link from "next/link";
 
 type Seance = {
@@ -58,47 +58,7 @@ export default async function Dashboard() {
 
   return (
     <div className="min-h-screen">
-      {/* Header */}
-      <header className="border-b border-[var(--line)] bg-[var(--paper)]">
-        <div className="max-w-5xl mx-auto px-6 lg:px-10 py-5 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-3">
-            <div
-              className="w-6 h-6 rounded-full flex items-center justify-center font-display text-[11px] text-[var(--paper)]"
-              style={{ background: "var(--deep)" }}
-            >
-              C
-            </div>
-            <div>
-              <div className="font-display text-[15px] leading-none text-[var(--deep)] font-semibold">
-                Carnet de formation
-              </div>
-              <div className="text-[11px] text-[var(--muted)] mt-0.5">
-                Christian Akpaho · 2026
-              </div>
-            </div>
-          </Link>
-
-          <div className="flex items-center gap-4">
-            <div className="text-right">
-              <div className="text-[13px] text-[var(--deep)] font-medium">
-                {profile?.full_name}
-              </div>
-              <div
-                className={`chip mt-1 ${
-                  profile?.role === "formateur" ? "chip-gold" : "chip-teal"
-                }`}
-              >
-                {profile?.role === "formateur" ? "Formateur" : "Apprenant"}
-              </div>
-            </div>
-            <form action={signOut}>
-              <button type="submit" className="btn-ghost">
-                Sortir
-              </button>
-            </form>
-          </div>
-        </div>
-      </header>
+      <SiteHeader fullName={profile?.full_name} role={profile?.role} />
 
       <main className="max-w-5xl mx-auto px-6 lg:px-10 py-12 lg:py-16">
         {/* Hero */}
