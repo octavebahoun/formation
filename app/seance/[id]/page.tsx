@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { SiteHeader } from "@/components/site-header";
 import { FormateurPanel } from "./formateur-panel";
 import { ElevePanel } from "./eleve-panel";
+import { createExercice } from "@/app/exercice/[id]/actions";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
@@ -112,10 +113,24 @@ export default async function SeancePage({ params }: PageProps<"/seance/[id]">) 
             <h2 className="font-display text-xl font-semibold text-[var(--deep)]">
               Exercices
             </h2>
-            <span className="text-[11px] text-[var(--muted)]">
-              {exosRes.data?.length ?? 0} exercice
-              {(exosRes.data?.length ?? 0) > 1 ? "s" : ""}
-            </span>
+            <div className="flex items-center gap-4">
+              <span className="text-[11px] text-[var(--muted)]">
+                {exosRes.data?.length ?? 0} exercice
+                {(exosRes.data?.length ?? 0) > 1 ? "s" : ""}
+              </span>
+              {isFormateur && (
+                <form
+                  action={async () => {
+                    "use server";
+                    await createExercice(seance.id);
+                  }}
+                >
+                  <button type="submit" className="btn-primary text-[12px] py-2 px-3">
+                    + Nouvel exercice
+                  </button>
+                </form>
+              )}
+            </div>
           </div>
           {(exosRes.data?.length ?? 0) === 0 ? (
             <p className="text-[14px] text-[var(--muted)] italic">
