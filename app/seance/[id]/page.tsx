@@ -4,6 +4,7 @@ import { FormateurPanel } from "./formateur-panel";
 import { ElevePanel } from "./eleve-panel";
 import { ContenuEditor, GuideEditor } from "./contenu-editor";
 import { Markdown } from "@/components/markdown";
+import { SeanceSections } from "./sections";
 import { createExercice } from "@/app/exercice/[id]/actions";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -44,18 +45,146 @@ export default async function SeancePage({ params }: PageProps<"/seance/[id]">) 
   const next = idx < list.length - 1 ? list[idx + 1] : null;
 
   const isFormateur = profile?.role === "formateur";
+  const exos = exosRes.data ?? [];
+
+  const guideSlot = (
+    <div className="space-y-6">
+      <div>
+        <div className="eyebrow" style={{ color: "var(--gold)" }}>
+          Guide privé du formateur
+        </div>
+        <h2 className="font-display text-2xl font-semibold text-[var(--deep)] mt-1">
+          Plan pédagogique de la séance
+        </h2>
+        <p className="text-[12px] text-[var(--muted)] italic mt-1">
+          Christian ne voit pas cette section.
+        </p>
+      </div>
+      <GuideEditor seanceId={seance.id} initial={seance.guide_md ?? ""} />
+    </div>
+  );
+
+  const seanceSlot = (
+    <div className="space-y-14">
+      <section>
+        <div className="flex items-baseline justify-between mb-6">
+          <h2 className="font-display text-2xl font-semibold text-[var(--deep)]">
+            Contenu de la séance
+          </h2>
+          {!isFormateur && (
+            <span className="text-[11px] text-[var(--muted)]">
+              Rédigé par Octave
+            </span>
+          )}
+        </div>
+        {isFormateur ? (
+          <ContenuEditor
+            seanceId={seance.id}
+            initial={seance.contenu_md ?? ""}
+          />
+        ) : (
+          <div className="card p-6 lg:p-8">
+            <Markdown>{seance.contenu_md}</Markdown>
+          </div>
+        )}
+      </section>
+
+      <section>
+        {isFormateur ? (
+          <FormateurPanel seance={seance} />
+        ) : (
+          <ElevePanel seance={seance} />
+        )}
+      </section>
+
+      <section>
+        {isFormateur ? (
+          <ReadOnlyEleveView
+            compris={seance.compris_niveau}
+            questions={seance.questions_eleve}
+          />
+        ) : (
+          <ReadOnlyFormateurView notes={seance.notes_formateur} />
+        )}
+      </section>
+    </div>
+  );
+
+  const exosSlot = (
+    <section>
+      <div className="flex items-baseline justify-between mb-6">
+        <h2 className="font-display text-2xl font-semibold text-[var(--deep)]">
+          Exercices
+        </h2>
+        <div className="flex items-center gap-4">
+          <span className="text-[11px] text-[var(--muted)]">
+            {exos.length} exercice{exos.length > 1 ? "s" : ""}
+          </span>
+          {isFormateur && (
+            <form
+              action={async () => {
+                "use server";
+                await createExercice(seance.id);
+              }}
+            >
+              <button
+                type="submit"
+                className="btn-primary text-[12px] py-2 px-3"
+              >
+                + Nouvel exercice
+              </button>
+            </form>
+          )}
+        </div>
+      </div>
+      {exos.length === 0 ? (
+        <p className="text-[14px] text-[var(--muted)] italic">
+          Aucun exercice pour cette séance.
+        </p>
+      ) : (
+        <ul className="border-t border-[var(--line)]">
+          {exos.map((e) => (
+            <li key={e.id} className="border-b border-[var(--line)]">
+              <Link
+                href={`/exercice/${e.id}`}
+                className="flex items-center justify-between py-4 group"
+              >
+                <span className="text-[15px] text-[var(--ink)] font-medium">
+                  {e.titre}
+                </span>
+                <span className="text-[var(--muted)] group-hover:text-[var(--deep)] transition">
+                  →
+                </span>
+              </Link>
+            </li>
+          ))}
+        </ul>
+      )}
+    </section>
+  );
+
+  const sections = isFormateur
+    ? [
+        { key: "guide", label: "Guide", slot: guideSlot },
+        { key: "seance", label: "Séance", slot: seanceSlot },
+        { key: "exos", label: "Exercices", slot: exosSlot },
+      ]
+    : [
+        { key: "seance", label: "Séance", slot: seanceSlot },
+        { key: "exos", label: "Exercices", slot: exosSlot },
+      ];
 
   return (
     <div className="min-h-screen">
       <SiteHeader fullName={profile?.full_name} role={profile?.role} />
 
-      <main className="max-w-5xl mx-auto px-6 lg:px-10 py-12 lg:py-16">
+      <main className="max-w-6xl mx-auto px-6 lg:px-10 py-12 lg:py-16">
         <Link href="/" className="btn-ghost mb-10 inline-flex">
           <span aria-hidden>←</span> Retour au carnet
         </Link>
 
         {/* Hero */}
-        <div className="grid lg:grid-cols-[1fr_auto] gap-6 items-start mb-14">
+        <div className="grid lg:grid-cols-[1fr_auto] gap-6 items-start mb-12">
           <div>
             <div className="eyebrow mb-4">
               Mois {seance.mois} · Séance {seance.semaine}
@@ -88,129 +217,10 @@ export default async function SeancePage({ params }: PageProps<"/seance/[id]">) 
           </div>
         </div>
 
-        <div className="rule mb-14" />
+        <div className="rule mb-12" />
 
-        {/* Guide pédagogique (formateur uniquement) */}
-        {isFormateur && (
-          <section
-            className="mb-16 rounded-sm p-6 lg:p-8"
-            style={{
-              background: "rgba(184, 134, 47, 0.05)",
-              border: "1px solid rgba(184, 134, 47, 0.25)",
-            }}
-          >
-            <div className="flex items-baseline justify-between mb-5">
-              <div>
-                <div className="eyebrow" style={{ color: "var(--gold)" }}>
-                  Guide privé du formateur
-                </div>
-                <h2 className="font-display text-xl font-semibold text-[var(--deep)] mt-1">
-                  Plan pédagogique de la séance
-                </h2>
-              </div>
-              <span className="text-[11px] text-[var(--muted)] italic">
-                Christian ne voit pas cette section
-              </span>
-            </div>
-            <GuideEditor
-              seanceId={seance.id}
-              initial={seance.guide_md ?? ""}
-            />
-          </section>
-        )}
-
-        {/* Contenu de séance (markdown) */}
-        <section className="mb-16">
-          <div className="flex items-baseline justify-between mb-6">
-            <h2 className="font-display text-xl font-semibold text-[var(--deep)]">
-              Contenu de la séance
-            </h2>
-            {!isFormateur && (
-              <span className="text-[11px] text-[var(--muted)]">
-                Rédigé par Octave
-              </span>
-            )}
-          </div>
-          {isFormateur ? (
-            <ContenuEditor
-              seanceId={seance.id}
-              initial={seance.contenu_md ?? ""}
-            />
-          ) : (
-            <div className="card p-6 lg:p-8">
-              <Markdown>{seance.contenu_md}</Markdown>
-            </div>
-          )}
-        </section>
-
-        {/* Panneau selon rôle */}
-        <section className="mb-16">
-          {isFormateur ? (
-            <FormateurPanel seance={seance} />
-          ) : (
-            <ElevePanel seance={seance} />
-          )}
-        </section>
-
-        {/* Vue croisée : chaque rôle voit l'autre en lecture */}
-        {isFormateur ? (
-          <ReadOnlyEleveView
-            compris={seance.compris_niveau}
-            questions={seance.questions_eleve}
-          />
-        ) : (
-          <ReadOnlyFormateurView notes={seance.notes_formateur} />
-        )}
-
-        {/* Exercices liés */}
-        <section className="mt-16">
-          <div className="flex items-baseline justify-between mb-6">
-            <h2 className="font-display text-xl font-semibold text-[var(--deep)]">
-              Exercices
-            </h2>
-            <div className="flex items-center gap-4">
-              <span className="text-[11px] text-[var(--muted)]">
-                {exosRes.data?.length ?? 0} exercice
-                {(exosRes.data?.length ?? 0) > 1 ? "s" : ""}
-              </span>
-              {isFormateur && (
-                <form
-                  action={async () => {
-                    "use server";
-                    await createExercice(seance.id);
-                  }}
-                >
-                  <button type="submit" className="btn-primary text-[12px] py-2 px-3">
-                    + Nouvel exercice
-                  </button>
-                </form>
-              )}
-            </div>
-          </div>
-          {(exosRes.data?.length ?? 0) === 0 ? (
-            <p className="text-[14px] text-[var(--muted)] italic">
-              Aucun exercice pour cette séance.
-            </p>
-          ) : (
-            <ul className="border-t border-[var(--line)]">
-              {exosRes.data!.map((e) => (
-                <li key={e.id} className="border-b border-[var(--line)]">
-                  <Link
-                    href={`/exercice/${e.id}`}
-                    className="flex items-center justify-between py-4 group"
-                  >
-                    <span className="text-[15px] text-[var(--ink)] font-medium">
-                      {e.titre}
-                    </span>
-                    <span className="text-[var(--muted)] group-hover:text-[var(--deep)] transition">
-                      →
-                    </span>
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          )}
-        </section>
+        {/* Sidebar + section active */}
+        <SeanceSections sections={sections} />
 
         {/* Navigation prev/next */}
         <nav className="mt-20 pt-8 border-t border-[var(--line)] flex justify-between gap-6">
@@ -261,7 +271,7 @@ function StatusBadge({ statut }: { statut: keyof typeof STATUT_LABEL }) {
 
 function ReadOnlyFormateurView({ notes }: { notes: string | null }) {
   return (
-    <section className="card p-8">
+    <div className="card p-8">
       <div className="eyebrow mb-3">Notes du formateur</div>
       {notes ? (
         <p className="text-[14.5px] text-[var(--ink)] whitespace-pre-wrap leading-relaxed">
@@ -272,7 +282,7 @@ function ReadOnlyFormateurView({ notes }: { notes: string | null }) {
           Pas encore de notes.
         </p>
       )}
-    </section>
+    </div>
   );
 }
 
@@ -284,7 +294,7 @@ function ReadOnlyEleveView({
   questions: string | null;
 }) {
   return (
-    <section className="card p-8 space-y-6">
+    <div className="card p-8 space-y-6">
       <div>
         <div className="eyebrow mb-3">Compréhension de Christian</div>
         {compris ? (
@@ -313,6 +323,6 @@ function ReadOnlyEleveView({
           </p>
         )}
       </div>
-    </section>
+    </div>
   );
 }
